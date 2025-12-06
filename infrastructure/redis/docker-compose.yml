@@ -1,0 +1,20 @@
+services:
+  redis:
+    image: redis
+    container_name: redis
+    hostname: redis
+    restart: always
+    command: redis-server /usr/local/etc/redis/redis.conf
+    volumes:
+      - './config/redis.conf:/usr/local/etc/redis/redis.conf'
+      - './data:/data'
+    ports:
+      - '6379:6379'
+    networks:
+      metrical_network:
+        ipv4_address: 152.18.0.12
+
+networks:
+  metrical_network:
+    external:
+      name: metrical_network

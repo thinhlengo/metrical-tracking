@@ -1,0 +1,31 @@
+version: '3.9'
+services:
+  postgresql:
+    build:
+      context: ./
+    restart: always
+    container_name: postgresql
+    environment:
+      POSTGRES_PASSWORD: 'Admin@123'
+      POSTGRES_USER: sa
+      POSTGRES_DB: metrical
+      POSTGRES_MULTIPLE_DATABASES: "metrical,sa,Admin@123"
+    volumes:
+      - '${PWD}/store-services/postgresql/pgdata:/var/lib/postgresql/data'
+      - '${PWD}/config/custom_settings.conf:/etc/postgresql/custom_settings.conf'
+    ports:
+      - '5325:5432'
+    command:
+      [
+        "-c", "log_min_duration_statement=1000",
+        "-c", "shared_preload_libraries=pg_stat_statements"
+      ]
+    networks:
+      metrical_network:
+        ipv4_address: 152.18.0.3
+networks:
+  metrical_network:
+    ipam:
+      driver: default
+      config:
+        - subnet: 152.18.0.0/24
