@@ -8,6 +8,8 @@ import { ConfigModule } from '@nestjs/config';
 import databaseConfig from './configurate/database.config';
 import { CachingModule } from './caching/caching.module';
 import { RedisModule } from './caching/redis.module';
+import { MetricRecordModule } from './modules/metric-record/metric-record.module';
+import { UnitModule } from './modules/unit/unit.module';
 import redisConfig from './configurate/redis.config';
 
 @Module({
@@ -21,7 +23,9 @@ import redisConfig from './configurate/redis.config';
     RabbitMQModule,
     DatabaseModule,
     CachingModule,
-    RedisModule
+    RedisModule,
+    MetricRecordModule,
+    UnitModule
   ],
 })
 export class AppModule {}
