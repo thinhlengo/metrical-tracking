@@ -11,6 +11,10 @@ export class MetricTypeUnitRuleConstraint implements ValidatorConstraintInterfac
   async validate(_: any, args: ValidationArguments): Promise<boolean> {
     const obj = args.object as GetMetricRecordsChartDto;
 
+    if (!obj.unit) {
+      return true;
+    }
+
     const units = await this.unitService.list();
     const unit = units.find(unit => unit.symbol === obj.unit);
 

@@ -9,6 +9,7 @@ import { GetMetricRecordsDto } from './dtos/get-metric-record.dto';
 import { PaginationResponseDtoWithCursor } from 'src/common/dtos/pagination-response.dto';
 import { RecordChartDto, RecordDto } from './dtos/record.dto';
 import { GetMetricRecordsChartDto } from './dtos/metric-record-chart.dto';
+import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
 
 @Controller('metric-records')
 export class MetricRecordController {
@@ -16,16 +17,19 @@ export class MetricRecordController {
 
   constructor(private readonly metricRecordService: MetricRecordService) {}
 
+  @ApiCreatedResponse({ description: 'Metric records created successfully', type: SingleDataResponseDto<boolean> })
   @Post()
   async createMetricRecord(@Body() createMetricRecordDto: CreateMetricRecordDto): Promise<SingleDataResponseDto<boolean>> {
     return new SingleDataResponseDto<boolean>(await this.metricRecordService.createMetricRecord(createMetricRecordDto));
   }
 
+  @ApiOkResponse({ description: 'Metric records fetched successfully', type: PaginationResponseDtoWithCursor<RecordDto> })
   @Get()
   getMetricRecords(@Query() params: GetMetricRecordsDto): Promise<PaginationResponseDtoWithCursor<RecordDto>> {
     return this.metricRecordService.getMetricRecords(params);
   }
 
+  @ApiOkResponse({ description: 'Metric records chart fetched successfully', type: SingleDataResponseDto<RecordChartDto[]> })
   @Get('chart')
   async getMetricRecordsChart(@Query() params: GetMetricRecordsChartDto) : Promise<SingleDataResponseDto<RecordChartDto[]>> {
     return new SingleDataResponseDto<RecordChartDto[]>(await this.metricRecordService.getMetricRecordsChart(params));

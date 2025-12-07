@@ -128,24 +128,29 @@ export class MetricRecordService {
     }
 
     return records.map((record) => {
-      let value: number;
-      if (record.metricType === MetricType.DISTANCE) {
-        value = this.unitConverterService.convertDistance(
-          record.value,
-          DistanceUnit.METER,
-          params.unit as DistanceUnit,
-        );
-      } else if (record.metricType === MetricType.TEMPERATURE) {
-        value = this.unitConverterService.convertTemperature(
-          record.value,
-          TemperatureUnit.CELSIUS,
-          params.unit as TemperatureUnit,
-        );
+      let value: number = record.source.value;
+      let unit: string = params.unit || record.source.unit;
+      
+      if (params.unit) {
+        if (record.metricType === MetricType.DISTANCE) {
+          value = this.unitConverterService.convertDistance(
+            record.value,
+            DistanceUnit.METER,
+            params.unit as DistanceUnit,
+          );
+        } else if (record.metricType === MetricType.TEMPERATURE) {
+          value = this.unitConverterService.convertTemperature(
+            record.value,
+            TemperatureUnit.CELSIUS,
+            params.unit as TemperatureUnit,
+          );
+        }
       }
 
       return {
         date: record.recordedAt,
-        value: value!,
+        value: value,
+        unit: unit,
       };
     });
   }
