@@ -1,4 +1,5 @@
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { RecordValueDto } from "./dtos/add-metric-record.dto";
 
 export enum MetricType {
   DISTANCE = 'DISTANCE',
@@ -21,7 +22,7 @@ export class MetricRecord {
   metricType: MetricType;
 
   @Column({ type: 'jsonb', nullable: true })
-  source: Record<string, any>;
+  source: RecordValueDto;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   recordedAt: Date;

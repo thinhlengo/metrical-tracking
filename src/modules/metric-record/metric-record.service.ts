@@ -8,6 +8,9 @@ import { MetricRecord, MetricType } from './metric-record.entity';
 import { METRICAL_RECORD_CREATE_MESSAGE } from '../../rabbitmq/message.constant';
 import { METRICAL_SERVICE } from '../../rabbitmq/rabbitmq.module';
 import { UnitConverterService } from '../unit/unit-converter/unit-converter.service';
+import { GetMetricRecordsDto } from './dtos/get-metric-record.dto';
+import { PaginationResponseDtoWithCursor } from 'src/common/dtos/pagination-response.dto';
+import { RecordDto } from './dtos/record.dto';
 
 @Injectable()
 export class MetricRecordService {
@@ -85,5 +88,34 @@ export class MetricRecordService {
     const createdRecords = await this.metricRecordRepository.createMetricRecord(records);
 
     return createdRecords;
+  }
+
+  async getMetricRecords(params: GetMetricRecordsDto): Promise<PaginationResponseDtoWithCursor<RecordDto>> {
+    const [records, total] = await this.metricRecordRepository.getMetricRecords(params);
+    if (!records || records.length === 0) {
+      return new PaginationResponseDtoWithCursor<RecordDto>([], 0, params.cursor, params.direction, params.take, null, null);
+    }
+
+    const nextParams = Object.assign({}, params);
+    nextParams.cursor = records[records.length - 1].id;
+    nextParams.direction = 'previous';
+
+    const previousParams = Object.assign({}, params);
+    previousParams.cursor = records[0].id;
+    previousParams.direction = 'next';
+
+    const recordDtos = records.map((record) => this.toRecordDto(record));
+
+    return new PaginationResponseDtoWithCursor(recordDtos, total, params.cursor, params.direction, params.take, nextParams.cursor, previousParams.cursor);
+  }
+
+  private toRecordDto(record: MetricRecord): RecordDto {
+    return {
+      id: record.id,
+      value: record.source.value,
+      metricType: record.metricType,
+      unit: record.source.unit,
+      date: new Date(record.source.date),
+    };
   }
 }
