@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Redis } from 'ioredis';
+import { sleep } from '../../utilities/sleep';
 import { v4 as uuidv4 } from 'uuid';
 
 export type RedisLockOptions = {
@@ -40,7 +41,7 @@ export class RedisService {
         break;
       }
 
-      await this.sleep(retryDelayMs);
+      await sleep(retryDelayMs);
     }
 
     this.logger.debug(`Failed to acquire lock for key=${key}`);
@@ -60,9 +61,5 @@ export class RedisService {
 
     const result = await this.redis.eval(luaScript, 1, key, value);
     return result === 1;
-  }
-
-  private sleep(ms: number) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }

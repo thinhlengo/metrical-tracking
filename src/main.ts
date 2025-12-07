@@ -14,7 +14,10 @@ import { RequestLoggingInterceptor } from './interceptors/request-logging.interc
 import { AllExceptionsFilter } from './filters/http-exception.filter';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: new LoggerService(),
+  });
+  
   const logger = app.get(LoggerService);
   const configService = app.get(ConfigService<AllConfigType>);
 
@@ -28,6 +31,9 @@ async function bootstrap() {
       queueOptions: {
         durable: true,
       },
+      noAck: true,
+      persistent: true,
+      prefetchCount: 1,
     },
   });
 

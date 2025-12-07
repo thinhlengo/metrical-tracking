@@ -3,12 +3,14 @@ import { AllConfigType } from 'src/configurate/config.type';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { Global, Module } from '@nestjs/common';
 
+export const METRICAL_SERVICE = 'METRICAL_SERVICE';
+
 @Global()
 @Module({
   imports: [
     ClientsModule.registerAsync([
       {
-        name: 'METRICAL_SERVICE',
+        name: METRICAL_SERVICE,
         useFactory: (configService: ConfigService<AllConfigType>) => ({
           transport: Transport.RMQ,
           options: {
@@ -19,6 +21,9 @@ import { Global, Module } from '@nestjs/common';
             queueOptions: {
               durable: true,
             },
+            noAck: true,
+            persistent: true,
+            prefetchCount: 1,
           },
         }),
         inject: [ConfigService],
