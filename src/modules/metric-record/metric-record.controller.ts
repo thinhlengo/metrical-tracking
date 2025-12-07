@@ -1,16 +1,16 @@
 import { Body, Controller, Get, Logger, Post, Query, UseGuards } from '@nestjs/common';
 import { CreateMetricRecordDto } from './dtos/add-metric-record.dto';
 import { MetricRecordService } from './metric-record.service';
-import { SingleDataResponseDto } from 'src/common/dtos/single-data-response.dto';
+import { SingleDataResponseDto } from '../../common/dtos/single-data-response.dto';
 import { Ctx, EventPattern, Payload, RmqContext } from '@nestjs/microservices';
-import { METRICAL_RECORD_CREATE_MESSAGE } from 'src/rabbitmq/message.constant';
+import { METRICAL_RECORD_CREATE_MESSAGE } from '../../rabbitmq/message.constant';
 import { Channel, Message } from 'amqplib';
 import { GetMetricRecordsDto } from './dtos/get-metric-record.dto';
-import { PaginationResponseDtoWithCursor } from 'src/common/dtos/pagination-response.dto';
+import { PaginationResponseDtoWithCursor } from '../../common/dtos/pagination-response.dto';
 import { RecordChartDto, RecordDto } from './dtos/record.dto';
 import { GetMetricRecordsChartDto } from './dtos/metric-record-chart.dto';
 import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
-import { CheckMessageRetryGuard } from 'src/guards/check-message-retry/check-message-retry.guard';
+import { CheckMessageRetryGuard } from '../../guards/check-message-retry/check-message-retry.guard';
 
 @Controller('metric-records')
 export class MetricRecordController {

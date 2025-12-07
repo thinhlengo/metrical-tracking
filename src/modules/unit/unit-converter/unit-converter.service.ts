@@ -51,20 +51,4 @@ export class UnitConverterService {
         throw new Error(`Unknown temperature unit: ${to}`);
     }
   }
-
-  convert(value: number, from: string, to: string): number {
-    if (from === to) return value;
-    
-    if (Object.values(DistanceUnit).includes(from as DistanceUnit) &&
-        Object.values(DistanceUnit).includes(to as DistanceUnit)) {
-      return this.convertDistance(value, from as DistanceUnit, to as DistanceUnit);
-    }
-
-    if (Object.values(TemperatureUnit).includes(from as TemperatureUnit) &&
-        Object.values(TemperatureUnit).includes(to as TemperatureUnit)) {
-      return this.convertTemperature(value, from as TemperatureUnit, to as TemperatureUnit);
-    }
-
-    throw new Error(`Invalid unit conversion requested: ${from} to ${to}`);
-  }
 }

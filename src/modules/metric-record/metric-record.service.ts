@@ -9,10 +9,10 @@ import { METRICAL_RECORD_CREATE_MESSAGE } from '../../rabbitmq/message.constant'
 import { METRICAL_SERVICE } from '../../rabbitmq/rabbitmq.module';
 import { UnitConverterService } from '../unit/unit-converter/unit-converter.service';
 import { GetMetricRecordsDto } from './dtos/get-metric-record.dto';
-import { PaginationResponseDtoWithCursor } from 'src/common/dtos/pagination-response.dto';
+import { PaginationResponseDtoWithCursor } from '../../common/dtos/pagination-response.dto';
 import { RecordChartDto, RecordDto } from './dtos/record.dto';
 import { GetMetricRecordsChartDto } from './dtos/metric-record-chart.dto';
-import { sleep } from 'src/utilities/sleep';
+import { sleep } from '../../utilities/sleep';
 
 @Injectable()
 export class MetricRecordService {
@@ -56,7 +56,7 @@ export class MetricRecordService {
     return true;
   }
 
-  async createMetricRecordMQ(payload: CreateMetricRecordDto) {
+  async createMetricRecordMQ(payload: CreateMetricRecordDto) :Promise<boolean> {
     const units = await this.unitService.list();
     const unitMap = new Map<string, UnitDto>(
       units.map((unit) => [unit.symbol, unit]),
@@ -90,8 +90,13 @@ export class MetricRecordService {
     });
 
     const createdRecords = await this.metricRecordRepository.createMetricRecord(records);
+    if (createdRecords.length > 0) {
+      this.logger.log(`Metric records created ${createdRecords.length} successfully`);
+    } else {
+      this.logger.error(`Error creating metric records`);
+    }
 
-    return createdRecords;
+    return true;
   }
 
   async getMetricRecords(params: GetMetricRecordsDto): Promise<PaginationResponseDtoWithCursor<RecordDto>> {
