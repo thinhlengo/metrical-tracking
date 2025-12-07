@@ -1,5 +1,5 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { DistanceUnit, TemperatureUnit } from '../unit.entity';
+import { Injectable, Logger } from '@nestjs/common';
+import { DistanceUnit, TemperatureUnit } from '../dtos/unit.dto';
 
 @Injectable()
 export class UnitConverterService {

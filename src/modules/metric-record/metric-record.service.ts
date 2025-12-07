@@ -3,7 +3,7 @@ import { CreateMetricRecordDto } from './dtos/add-metric-record.dto';
 import { MetricRecordRepository } from './metric-record.repository';
 import { ClientRMQ } from '@nestjs/microservices';
 import { UnitService } from '../unit/unit.service';
-import { DistanceUnit, TemperatureUnit, Unit } from '../unit/unit.entity';
+import { DistanceUnit, TemperatureUnit, UnitDto } from '../unit/dtos/unit.dto';
 import { MetricRecord, MetricType } from './metric-record.entity';
 import { METRICAL_RECORD_CREATE_MESSAGE } from '../../rabbitmq/message.constant';
 import { METRICAL_SERVICE } from '../../rabbitmq/rabbitmq.module';
@@ -12,6 +12,7 @@ import { GetMetricRecordsDto } from './dtos/get-metric-record.dto';
 import { PaginationResponseDtoWithCursor } from 'src/common/dtos/pagination-response.dto';
 import { RecordChartDto, RecordDto } from './dtos/record.dto';
 import { GetMetricRecordsChartDto } from './dtos/metric-record-chart.dto';
+import { sleep } from 'src/utilities/sleep';
 
 @Injectable()
 export class MetricRecordService {
@@ -49,13 +50,15 @@ export class MetricRecordService {
         });
 
       index += batchSize;
+
+      await sleep(500);
     }
     return true;
   }
 
   async createMetricRecordMQ(payload: CreateMetricRecordDto) {
     const units = await this.unitService.list();
-    const unitMap = new Map<string, Unit>(
+    const unitMap = new Map<string, UnitDto>(
       units.map((unit) => [unit.symbol, unit]),
     );
 

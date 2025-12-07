@@ -1,4 +1,4 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, Index, PrimaryGeneratedColumn } from "typeorm";
 import { RecordValueDto } from "./dtos/add-metric-record.dto";
 
 export enum MetricType {
@@ -6,6 +6,9 @@ export enum MetricType {
   TEMPERATURE = 'TEMPERATURE',
 }
 
+@Index(['metricType'])
+@Index(['metricType', 'recordedAt'])
+@Index(['id', 'recordedAt'])
 @Entity('metric_records')
 export class MetricRecord {
   @PrimaryGeneratedColumn('uuid')
