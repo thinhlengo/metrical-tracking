@@ -21,7 +21,7 @@ export class MetricRecordService {
   ) {}
 
   async createMetricRecord(payload: CreateMetricRecordDto): Promise<boolean> {
-    const batchSize = 5000;
+    const batchSize = 3000;
     let index = 0;
     while (index < payload.data.length) {
       const batch = payload.data.slice(index, index + batchSize);

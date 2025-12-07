@@ -21,14 +21,14 @@ export class MetricRecordController {
   async createMetricRecordM(@Payload() payload: CreateMetricRecordDto, @Ctx() context: RmqContext ) {
     const channel = context.getChannelRef() as Channel;
     const originalMsg = context.getMessage() as Message;
-    // try {
+    try {
       await this.metricRecordService.createMetricRecordMQ(payload);
       this.logger.log(`Metric records created`);
       channel.ack(originalMsg);
-    // } catch (error) {
-    //   this.logger.error(`Error creating metric records`, error);
-    //   channel.nack(originalMsg, false, true);
-    //   throw error;
-    // }
+    } catch (error) {
+      this.logger.error(`Error creating metric records`, error);
+      channel.nack(originalMsg, false, true);
+      throw error;
+    }
   }
 }

@@ -21,7 +21,6 @@ export const METRICAL_SERVICE = 'METRICAL_SERVICE';
             queueOptions: {
               durable: true,
             },
-            noAck: true,
             persistent: true,
             prefetchCount: 1,
           },
