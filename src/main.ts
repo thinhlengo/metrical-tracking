@@ -30,6 +30,9 @@ async function bootstrap() {
       queue: 'metrical_queue',
       queueOptions: {
         durable: true,
+        arguments: {
+          'x-queue-type': 'quorum' 
+        }
       },
       noAck: false,
       persistent: true,

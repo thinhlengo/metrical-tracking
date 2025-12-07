@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Logger, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Logger, Post, Query, UseGuards } from '@nestjs/common';
 import { CreateMetricRecordDto } from './dtos/add-metric-record.dto';
 import { MetricRecordService } from './metric-record.service';
 import { SingleDataResponseDto } from 'src/common/dtos/single-data-response.dto';
@@ -10,6 +10,7 @@ import { PaginationResponseDtoWithCursor } from 'src/common/dtos/pagination-resp
 import { RecordChartDto, RecordDto } from './dtos/record.dto';
 import { GetMetricRecordsChartDto } from './dtos/metric-record-chart.dto';
 import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
+import { CheckMessageRetryGuard } from 'src/guards/check-message-retry/check-message-retry.guard';
 
 @Controller('metric-records')
 export class MetricRecordController {
@@ -35,8 +36,9 @@ export class MetricRecordController {
     return new SingleDataResponseDto<RecordChartDto[]>(await this.metricRecordService.getMetricRecordsChart(params));
   }
 
+  @UseGuards(CheckMessageRetryGuard)
   @EventPattern(METRICAL_RECORD_CREATE_MESSAGE)
-  async createMetricRecordM(@Payload() payload: CreateMetricRecordDto, @Ctx() context: RmqContext ) {
+  async createMetricRecordM(@Payload() payload: CreateMetricRecordDto, @Ctx() context: RmqContext) {
     const channel = context.getChannelRef() as Channel;
     const originalMsg = context.getMessage() as Message;
     try {

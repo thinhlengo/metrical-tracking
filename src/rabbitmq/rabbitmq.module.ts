@@ -20,6 +20,9 @@ export const METRICAL_SERVICE = 'METRICAL_SERVICE';
             queue: 'metrical_queue',
             queueOptions: {
               durable: true,
+              arguments: {
+                'x-queue-type': 'quorum' 
+              }
             },
             persistent: true,
             prefetchCount: 1,
