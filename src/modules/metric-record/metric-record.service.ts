@@ -10,7 +10,8 @@ import { METRICAL_SERVICE } from '../../rabbitmq/rabbitmq.module';
 import { UnitConverterService } from '../unit/unit-converter/unit-converter.service';
 import { GetMetricRecordsDto } from './dtos/get-metric-record.dto';
 import { PaginationResponseDtoWithCursor } from 'src/common/dtos/pagination-response.dto';
-import { RecordDto } from './dtos/record.dto';
+import { RecordChartDto, RecordDto } from './dtos/record.dto';
+import { GetMetricRecordsChartDto } from './dtos/metric-record-chart.dto';
 
 @Injectable()
 export class MetricRecordService {
@@ -33,11 +34,11 @@ export class MetricRecordService {
 
       this.clientRMQ
         .emit(METRICAL_RECORD_CREATE_MESSAGE, {
-          data: batch
+          data: batch,
         })
         .subscribe({
           next: (value) => {
-            this.logger.log(`Metric records created ${index} of ${payload.data.length}`);
+            this.logger.log(`Metric records created ${index} of ${payload.data.length} successfully ${JSON.stringify(value)}`);
           },
           error: (error) => {
             this.logger.error(`Error creating metric records ${index} of ${payload.data.length}`, error);
@@ -93,7 +94,7 @@ export class MetricRecordService {
   async getMetricRecords(params: GetMetricRecordsDto): Promise<PaginationResponseDtoWithCursor<RecordDto>> {
     const [records, total] = await this.metricRecordRepository.getMetricRecords(params);
     if (!records || records.length === 0) {
-      return new PaginationResponseDtoWithCursor<RecordDto>([], 0, params.cursor, params.direction, params.take, null, null);
+      return new PaginationResponseDtoWithCursor<RecordDto>([], 0, params.cursor, params.direction, params.take);
     }
 
     const nextParams = Object.assign({}, params);
@@ -117,5 +118,35 @@ export class MetricRecordService {
       unit: record.source.unit,
       date: new Date(record.source.date),
     };
+  }
+
+  async getMetricRecordsChart(params: GetMetricRecordsChartDto): Promise<RecordChartDto[]> {
+
+    const records = await this.metricRecordRepository.getMetricRecordsChart(params);
+    if (!records || records.length === 0) {
+      return [];
+    }
+
+    return records.map((record) => {
+      let value: number;
+      if (record.metricType === MetricType.DISTANCE) {
+        value = this.unitConverterService.convertDistance(
+          record.value,
+          DistanceUnit.METER,
+          params.unit as DistanceUnit,
+        );
+      } else if (record.metricType === MetricType.TEMPERATURE) {
+        value = this.unitConverterService.convertTemperature(
+          record.value,
+          TemperatureUnit.CELSIUS,
+          params.unit as TemperatureUnit,
+        );
+      }
+
+      return {
+        date: record.recordedAt,
+        value: value!,
+      };
+    });
   }
 }

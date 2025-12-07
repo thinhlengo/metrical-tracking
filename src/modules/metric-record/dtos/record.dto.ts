@@ -7,3 +7,8 @@ export class RecordDto {
   unit: string;
   date: Date;
 }
+
+export class RecordChartDto {
+  date: Date;
+  value: number;
+}

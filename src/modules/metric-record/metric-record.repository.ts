@@ -3,6 +3,7 @@ import { MetricRecord } from "./metric-record.entity";
 import { Repository } from "typeorm";
 import { Injectable } from "@nestjs/common";
 import { GetMetricRecordsDto } from "./dtos/get-metric-record.dto";
+import { GetMetricRecordsChartDto } from "./dtos/metric-record-chart.dto";
 
 @Injectable()
 export class MetricRecordRepository {
@@ -17,6 +18,7 @@ export class MetricRecordRepository {
 
   async getMetricRecords(params: GetMetricRecordsDto): Promise<[MetricRecord[], number]> {
     const query = this.repository.createQueryBuilder()
+      .select(['"recordedAt"', 'id', 'value', 'metricType', 'source'])
       .where('"metricType" = :metricType', { metricType: params.metricType })
       .orderBy('"recordedAt"', 'DESC')
 
@@ -35,5 +37,22 @@ export class MetricRecordRepository {
 
     }
     return query.take(params.take).getManyAndCount();
+  }
+
+  async getMetricRecordsChart(params: GetMetricRecordsChartDto): Promise<MetricRecord[]> {
+    const sql = `
+      WITH teompp AS (
+        SELECT row_number() OVER (PARTITION BY DATE(mr."recordedAt") ORDER BY  mr."recordedAt" DESC), mr."id" 
+        FROM metric_records mr
+        WHERE mr."metricType" = $1
+        AND mr."recordedAt" <= $3 AND mr."recordedAt" >= $2
+        ORDER BY mr."recordedAt" DESC	
+      )
+      SELECT mr."recordedAt", mr."id", mr."value", mr."metricType", mr."source"
+      FROM metric_records mr
+      WHERE mr."id" IN (SELECT "id" FROM teompp WHERE "row_number" = 1)
+      ORDER BY mr."recordedAt" DESC`;
+
+    return this.repository.query(sql, [params.metricType, params.dates[0], params.dates[1]]);
   }
 }

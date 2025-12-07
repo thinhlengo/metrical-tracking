@@ -7,7 +7,8 @@ import { METRICAL_RECORD_CREATE_MESSAGE } from 'src/rabbitmq/message.constant';
 import { Channel, Message } from 'amqplib';
 import { GetMetricRecordsDto } from './dtos/get-metric-record.dto';
 import { PaginationResponseDtoWithCursor } from 'src/common/dtos/pagination-response.dto';
-import { RecordDto } from './dtos/record.dto';
+import { RecordChartDto, RecordDto } from './dtos/record.dto';
+import { GetMetricRecordsChartDto } from './dtos/metric-record-chart.dto';
 
 @Controller('metric-records')
 export class MetricRecordController {
@@ -23,6 +24,11 @@ export class MetricRecordController {
   @Get()
   getMetricRecords(@Query() params: GetMetricRecordsDto): Promise<PaginationResponseDtoWithCursor<RecordDto>> {
     return this.metricRecordService.getMetricRecords(params);
+  }
+
+  @Get('chart')
+  async getMetricRecordsChart(@Query() params: GetMetricRecordsChartDto) : Promise<SingleDataResponseDto<RecordChartDto[]>> {
+    return new SingleDataResponseDto<RecordChartDto[]>(await this.metricRecordService.getMetricRecordsChart(params));
   }
 
   @EventPattern(METRICAL_RECORD_CREATE_MESSAGE)
