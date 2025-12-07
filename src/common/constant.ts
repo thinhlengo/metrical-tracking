@@ -1,0 +1,1 @@
+export const METRICAL_API_VERSION_1 = '1';

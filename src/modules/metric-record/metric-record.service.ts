@@ -9,7 +9,7 @@ import { METRICAL_RECORD_CREATE_MESSAGE } from '../../rabbitmq/message.constant'
 import { METRICAL_SERVICE } from '../../rabbitmq/rabbitmq.module';
 import { UnitConverterService } from '../unit/unit-converter/unit-converter.service';
 import { GetMetricRecordsDto } from './dtos/get-metric-record.dto';
-import { PaginationResponseDtoWithCursor } from '../../common/dtos/pagination-response.dto';
+import { PaginationResponseDtoWithCursorDto } from '../../common/dtos/pagination-response.dto';
 import { RecordChartDto, RecordDto } from './dtos/record.dto';
 import { GetMetricRecordsChartDto } from './dtos/metric-record-chart.dto';
 import { sleep } from '../../utilities/sleep';
@@ -99,10 +99,10 @@ export class MetricRecordService {
     return true;
   }
 
-  async getMetricRecords(params: GetMetricRecordsDto): Promise<PaginationResponseDtoWithCursor<RecordDto>> {
+  async getMetricRecords(params: GetMetricRecordsDto): Promise<PaginationResponseDtoWithCursorDto<RecordDto>> {
     const [records, total] = await this.metricRecordRepository.getMetricRecords(params);
     if (!records || records.length === 0) {
-      return new PaginationResponseDtoWithCursor<RecordDto>([], 0, params.cursor, params.direction, params.take);
+      return new PaginationResponseDtoWithCursorDto<RecordDto>([], 0, params.cursor, params.direction, params.take);
     }
 
     const nextParams = Object.assign({}, params);
@@ -115,7 +115,7 @@ export class MetricRecordService {
 
     const recordDtos = records.map((record) => this.toRecordDto(record));
 
-    return new PaginationResponseDtoWithCursor(recordDtos, total, params.cursor, params.direction, params.take, nextParams.cursor, previousParams.cursor);
+    return new PaginationResponseDtoWithCursorDto(recordDtos, total, params.cursor, params.direction, params.take, nextParams.cursor, previousParams.cursor);
   }
 
   private toRecordDto(record: MetricRecord): RecordDto {

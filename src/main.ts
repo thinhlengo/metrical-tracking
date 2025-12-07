@@ -9,9 +9,11 @@ import * as cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { useContainer } from 'class-validator';
 import { json } from 'body-parser';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { RequestLoggingInterceptor } from './interceptors/request-logging.interceptor';
 import { AllExceptionsFilter } from './filters/http-exception.filter';
+import { METRICAL_API_VERSION_1 } from './common/constant';
+import { METRICAL_QUEUE } from './rabbitmq/message.constant';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -27,7 +29,7 @@ async function bootstrap() {
       urls: [
         `amqp://${configService.get('rabbitmq.username', { infer: true })}:${configService.get('rabbitmq.password', { infer: true })}@${configService.get('rabbitmq.host', { infer: true })}:${configService.get('rabbitmq.port', { infer: true })}`,
       ],
-      queue: 'metrical_queue',
+      queue: METRICAL_QUEUE,
       queueOptions: {
         durable: true,
         arguments: {
@@ -43,6 +45,11 @@ async function bootstrap() {
   app.use(cookieParser());
   app.use(helmet());
   app.use(json({ limit: '50mb' }));
+  app.enableVersioning({
+    type: VersioningType.URI,
+    defaultVersion: METRICAL_API_VERSION_1,
+    prefix: 'v',
+  });
 
   app.useGlobalInterceptors(new RequestLoggingInterceptor(logger));
   app.useGlobalFilters(new AllExceptionsFilter(logger));

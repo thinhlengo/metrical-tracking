@@ -6,7 +6,7 @@ import { GetMetricRecordsDto } from './dtos/get-metric-record.dto';
 import { GetMetricRecordsChartDto, TimeInterval } from './dtos/metric-record-chart.dto';
 import { MetricType } from './metric-record.entity';
 import { SingleDataResponseDto } from '../../common/dtos/single-data-response.dto';
-import { PaginationResponseDtoWithCursor } from '../../common/dtos/pagination-response.dto';
+import { PaginationResponseDtoWithCursorDto } from '../../common/dtos/pagination-response.dto';
 import { RecordChartDto, RecordDto } from './dtos/record.dto';
 import { RmqContext } from '@nestjs/microservices';
 
@@ -81,7 +81,7 @@ describe('MetricRecordController', () => {
         { id: '1', value: 100, metricType: MetricType.DISTANCE, unit: 'm', date: new Date() },
         { id: '2', value: 200, metricType: MetricType.DISTANCE, unit: 'm', date: new Date() },
       ];
-      const mockResponse = new PaginationResponseDtoWithCursor(mockRecords, 2, undefined, 'next', 10, '2', '1');
+      const mockResponse = new PaginationResponseDtoWithCursorDto(mockRecords, 2, undefined, 'next', 10, '2', '1');
       mockMetricRecordService.getMetricRecords.mockResolvedValue(mockResponse);
 
       const result = await controller.getMetricRecords(validParams);
@@ -92,7 +92,7 @@ describe('MetricRecordController', () => {
     });
 
     it('should return empty array when no records match', async () => {
-      const emptyResponse = new PaginationResponseDtoWithCursor<RecordDto>([], 0, undefined, 'next', 10);
+      const emptyResponse = new PaginationResponseDtoWithCursorDto<RecordDto>([], 0, undefined, 'next', 10);
       mockMetricRecordService.getMetricRecords.mockResolvedValue(emptyResponse);
 
       const result = await controller.getMetricRecords(validParams);
@@ -149,9 +149,7 @@ describe('MetricRecordController', () => {
 
   describe('createMetricRecordM (RabbitMQ EventPattern)', () => {
     const validPayload: CreateMetricRecordDto = {
-      data: [
-        { value: 100, unit: 'm', date: '2024-01-01T00:00:00Z' },
-      ],
+      data: [{ value: 100, unit: 'm', date: '2024-01-01T00:00:00Z' }],
     };
 
     const createMockRmqContext = (): { context: RmqContext; mockChannel: { ack: jest.Mock; nack: jest.Mock }; mockMessage: object } => {

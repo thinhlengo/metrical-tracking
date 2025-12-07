@@ -1,5 +1,5 @@
 
-export class PaginationResponseDtoWithCursor<T> {
+export class PaginationResponseDtoWithCursorDto<T> {
   data: T[];
   cursor?: string;
   direction?: 'next' | 'previous';

@@ -1,8 +1,9 @@
 import { Transform, Type } from "class-transformer";
-import { IsArray, IsDateString, IsNumber, IsOptional, IsString, ValidateNested } from "class-validator";
+import { IsArray, IsDateString, IsNumber, IsString, ValidateNested } from "class-validator";
 import { IsSupportedUnit } from "../validation/supported-unit";
 import { RecordValueUnitRule } from "../validation/record-value-unit";
 import { ApiProperty } from "@nestjs/swagger";
+
 export class RecordValueDto {
   @ApiProperty({ type: Number })
   @IsNumber()
