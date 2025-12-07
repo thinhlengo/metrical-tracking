@@ -1,8 +1,7 @@
 import { Transform, Type } from "class-transformer";
 import { IsArray, IsDateString, IsNumber, IsOptional, IsString, ValidateNested } from "class-validator";
-import { IsSupportedUnit } from "../../unit/validation/supported-unit/supported-unit";
-import { RecordValueUnitRule } from "src/modules/unit/validation/record-value-unit/record-value-unit";
-
+import { IsSupportedUnit } from "../validation/supported-unit";
+import { RecordValueUnitRule } from "../validation/record-value-unit";
 export class RecordValueDto {
   @IsNumber()
   @Type(() => Number)

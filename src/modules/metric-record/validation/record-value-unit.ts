@@ -1,8 +1,8 @@
 
 import { registerDecorator, ValidationArguments, ValidationOptions, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
-import { UnitService } from '../../unit.service';
+import { UnitService } from '../../unit/unit.service';
 import { RecordValueDto } from 'src/modules/metric-record/dtos/add-metric-record.dto';
-import { MetricType } from 'src/modules/metric-record/metric-record.entity';
+import { MetricType } from '../../metric-record/metric-record.entity';
 import { Injectable } from '@nestjs/common';
 
 @ValidatorConstraint({ name: 'RecordValueUnitRule', async: true })

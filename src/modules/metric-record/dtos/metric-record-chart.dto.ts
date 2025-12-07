@@ -1,6 +1,7 @@
 import { IsEnum, IsIn, IsOptional, IsString } from "class-validator";
 import { MetricType } from "../metric-record.entity";
-import { IsSupportedUnit } from "src/modules/unit/validation/supported-unit/supported-unit";
+import { MetricTypeUnitRule } from "../validation/unit-metric-type";
+import { IsSupportedUnit } from "../validation/supported-unit";
 
 export enum TimeInterval {
   ONE_MONTH = '1 month',
@@ -18,6 +19,9 @@ export class GetMetricRecordsChartDto {
 
   @IsIn([TimeInterval.ONE_MONTH, TimeInterval.TWO_MONTHS])
   time: TimeInterval = TimeInterval.ONE_MONTH;
+
+  @MetricTypeUnitRule()
+  private readonly _metricTypeUnitRule?: never;
 
   get dates(): [Date, Date] {
     const end = new Date();
