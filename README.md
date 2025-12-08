@@ -13,7 +13,7 @@ A metric tracking system for recording and visualizing **Distance** and **Temper
 
 ## Problem-Solving Approach
 
-### 1. Add New Metric (`POST /metric-records`)
+### 1. Add New Metric (`POST /v1/metric-records`)
 
 **Problem**: Handle potentially large batch inserts without blocking the API and ensure data consistency.
 
@@ -25,7 +25,7 @@ A metric tracking system for recording and visualizing **Distance** and **Temper
   - Temperature -> Celsius
 - **Original Data Preservation**: Store original input (value, unit, date) in JSONB `source` column for display purposes
 
-### 2. List All Metrics (`GET /metric-records`)
+### 2. List All Metrics (`GET /v1/metric-records`)
 
 **Problem**: Efficiently paginate large datasets with stable ordering for infinite scroll.
 
@@ -47,7 +47,7 @@ A metric tracking system for recording and visualizing **Distance** and **Temper
   - `nextCursor`: ID of last record (for loading older)
   - `previousCursor`: ID of first record (for loading newer)
 
-### 3. Get Chart Data (`GET /metric-records/chart`)
+### 3. Get Chart Data (`GET /v1/metric-records/chart`)
 
 **Problem**: Aggregate daily data points and support on-the-fly unit conversion for visualization.
 
@@ -125,6 +125,7 @@ The project includes a shell script to manage Docker containers for PostgreSQL a
 | PostgreSQL | 5325 | User: `sa`, Password: `Admin@123`, Database: `metrical` |
 | RabbitMQ (AMQP) | 5672 | User: `metrical`, Password: `metrical2025` |
 | RabbitMQ (Management UI) | 15672 | User: `metrical`, Password: `metrical2025` |
+| Redis | 6379 | Password: `metrical2025` |
 
 ## Database Migrations
 
