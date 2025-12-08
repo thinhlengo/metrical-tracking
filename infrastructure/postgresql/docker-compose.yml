@@ -25,6 +25,8 @@ services:
         ipv4_address: 152.18.0.3
 networks:
   metrical_network:
+    name: metrical_network
+    external: true
     ipam:
       driver: default
       config:
