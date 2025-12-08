@@ -3,15 +3,15 @@ import { registerDecorator, ValidationArguments, ValidationOptions, ValidatorCon
 import { UnitService } from '../../unit/unit.service';
 
 
-@ValidatorConstraint({ name: 'IsSupportedUnit', async: true })
+@ValidatorConstraint({ name: 'IsSupportedUnit', async: false })
 @Injectable()
 export class IsSupportedUnitConstraint implements ValidatorConstraintInterface {
   constructor(private readonly unitService: UnitService) {}
 
-  async validate(value: any, args: ValidationArguments): Promise<boolean> {
+  validate(value: any, args: ValidationArguments): boolean {
     if (value === null || value === undefined || value === '') return true;
     
-    const units = await this.unitService.list();
+    const units = this.unitService.list();
     return units.some(unit => unit.symbol === value);
   }
 

@@ -51,13 +51,13 @@ export class MetricRecordService {
 
       index += batchSize;
 
-      await sleep(500);
+      await sleep(200);
     }
     return true;
   }
 
   async createMetricRecordMQ(payload: CreateMetricRecordDto) :Promise<boolean> {
-    const units = await this.unitService.list();
+    const units = this.unitService.list();
     const unitMap = new Map<string, UnitDto>(
       units.map((unit) => [unit.symbol, unit]),
     );

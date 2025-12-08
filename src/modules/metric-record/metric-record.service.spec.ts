@@ -71,7 +71,7 @@ describe('MetricRecordService', () => {
     };
 
     it('should create metric records successfully with valid distance data', async () => {
-      mockUnitService.list.mockResolvedValue([ { name: 'Meter', symbol: 'm', metricType: MetricType.DISTANCE }]);
+      mockUnitService.list.mockReturnValue([ { name: 'Meter', symbol: 'm', metricType: MetricType.DISTANCE }]);
 
       mockUnitConverterService.convertDistance.mockReturnValue(100);
 
@@ -106,7 +106,7 @@ describe('MetricRecordService', () => {
     });
 
     it('should throw error when repository fails', async () => {
-      mockUnitService.list.mockResolvedValue([ { name: 'Meter', symbol: 'm', metricType: MetricType.DISTANCE }]);
+      mockUnitService.list.mockReturnValue([ { name: 'Meter', symbol: 'm', metricType: MetricType.DISTANCE }]);
       mockUnitConverterService.convertDistance.mockReturnValue(100);
       const dbError = new Error('Database connection failed');
       mockMetricRecordRepository.createMetricRecord.mockRejectedValue(dbError);

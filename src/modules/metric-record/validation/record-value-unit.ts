@@ -5,15 +5,15 @@ import { RecordValueDto } from 'src/modules/metric-record/dtos/add-metric-record
 import { MetricType } from '../../metric-record/metric-record.entity';
 import { Injectable } from '@nestjs/common';
 
-@ValidatorConstraint({ name: 'RecordValueUnitRule', async: true })
+@ValidatorConstraint({ name: 'RecordValueUnitRule', async: false })
 @Injectable()
 export class RecordValueUnitRuleConstraint implements ValidatorConstraintInterface {
   constructor(private readonly unitService: UnitService) {}
 
-  async validate(_: any, args: ValidationArguments): Promise<boolean> {
+  validate(_: any, args: ValidationArguments): boolean {
     const obj = args.object as RecordValueDto;
 
-    const units = await this.unitService.list();
+    const units = this.unitService.list();
     const unit = units.find(unit => unit.symbol === obj.unit);
 
     if (unit?.metricType === MetricType.DISTANCE && obj.value < 0) {
@@ -37,7 +37,7 @@ export function RecordValueUnitRule(validationOptions?: ValidationOptions) {
       options: validationOptions,
       validator: RecordValueUnitRuleConstraint,
       constraints: [UnitService],
-      async: true,
+      async: false,
     });
   };
 }

@@ -3,19 +3,19 @@ import { registerDecorator, ValidationArguments, ValidationOptions, ValidatorCon
 import { UnitService } from "../../unit/unit.service";
 import { GetMetricRecordsChartDto } from "../dtos/metric-record-chart.dto";
 
-@ValidatorConstraint({ name: 'MetricTypeUnitRule', async: true })
+@ValidatorConstraint({ name: 'MetricTypeUnitRule', async: false })
 @Injectable()
 export class MetricTypeUnitRuleConstraint implements ValidatorConstraintInterface {
   constructor(private readonly unitService: UnitService) {}
 
-  async validate(_: any, args: ValidationArguments): Promise<boolean> {
+  validate(_: any, args: ValidationArguments): boolean {
     const obj = args.object as GetMetricRecordsChartDto;
 
     if (!obj.unit) {
       return true;
     }
 
-    const units = await this.unitService.list();
+    const units = this.unitService.list();
     const unit = units.find(unit => unit.symbol === obj.unit);
 
     if (unit?.metricType !== obj.metricType) {
@@ -39,7 +39,7 @@ export function MetricTypeUnitRule(validationOptions?: ValidationOptions) {
       options: validationOptions,
       validator: MetricTypeUnitRuleConstraint,
       constraints: [UnitService],
-      async: true,
+      async: false,
     });
   };
 }
