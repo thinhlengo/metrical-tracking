@@ -15,10 +15,12 @@ export class MetricTypeUnitRuleConstraint implements ValidatorConstraintInterfac
       return true;
     }
 
-    const units = this.unitService.list();
-    const unit = units.find(unit => unit.symbol === obj.unit);
+    const unit = this.unitService.findBySymbol(obj.unit);
+    if (!unit) {
+      return false;
+    }
 
-    if (unit?.metricType !== obj.metricType) {
+    if (unit.metricType !== obj.metricType) {
       return false;
     }
 

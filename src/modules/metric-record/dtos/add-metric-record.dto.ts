@@ -30,6 +30,5 @@ export class CreateMetricRecordDto {
   @ApiProperty({ type: [RecordValueDto] })
   @IsArray()
   @Type(() => RecordValueDto)
-  @ValidateNested({ each: true })
   data: RecordValueDto[];
 }

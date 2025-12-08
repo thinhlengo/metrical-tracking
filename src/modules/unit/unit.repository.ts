@@ -7,19 +7,13 @@ export class UnitRepository {
   constructor() {}
 
   list(): UnitDto[] {
-    const distanceUnits = Object.values(DistanceUnit);
-    const distanceUnitsEntities = distanceUnits.map(unit => ({
-      name: unit,
-      symbol: unit,
-      metricType: MetricType.DISTANCE,
-    } as UnitDto));
-
-    const temperatureUnits = Object.values(TemperatureUnit);
-    const temperatureUnitsEntities = temperatureUnits.map(unit => ({
-      name: unit,
-      symbol: unit,
-      metricType: MetricType.TEMPERATURE,
-    } as UnitDto));
-    return [...distanceUnitsEntities, ...temperatureUnitsEntities];
+    const unitConfigs = [
+      { units: Object.values(DistanceUnit), metricType: MetricType.DISTANCE },
+      { units: Object.values(TemperatureUnit), metricType: MetricType.TEMPERATURE },
+    ];
+  
+    return unitConfigs.flatMap(({ units, metricType }) =>
+      units.map(unit => ({ name: unit, symbol: unit, metricType }))
+    );
   }
 }

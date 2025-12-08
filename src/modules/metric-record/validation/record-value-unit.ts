@@ -12,11 +12,12 @@ export class RecordValueUnitRuleConstraint implements ValidatorConstraintInterfa
 
   validate(_: any, args: ValidationArguments): boolean {
     const obj = args.object as RecordValueDto;
+    const unit = this.unitService.findBySymbol(obj.unit);
+    if (!unit) {
+      return false;
+    }
 
-    const units = this.unitService.list();
-    const unit = units.find(unit => unit.symbol === obj.unit);
-
-    if (unit?.metricType === MetricType.DISTANCE && obj.value < 0) {
+    if (unit.metricType === MetricType.DISTANCE && obj.value < 0) {
       return false;
     }
 

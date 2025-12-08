@@ -11,8 +11,12 @@ export class IsSupportedUnitConstraint implements ValidatorConstraintInterface {
   validate(value: any, args: ValidationArguments): boolean {
     if (value === null || value === undefined || value === '') return true;
     
-    const units = this.unitService.list();
-    return units.some(unit => unit.symbol === value);
+    const unit = this.unitService.findBySymbol(value);
+    if (!unit) {
+      return false;
+    }
+
+    return true;
   }
 
   defaultMessage(args: ValidationArguments): string {

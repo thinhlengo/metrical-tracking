@@ -9,10 +9,11 @@ import { UnitModule } from '../unit/unit.module';
 import { MetricTypeUnitRuleConstraint } from './validation/unit-metric-type';
 import { RecordValueUnitRuleConstraint } from './validation/record-value-unit';
 import { IsSupportedUnitConstraint } from './validation/supported-unit';
+import { ValidationAddRecordService } from './validation/validation-add-record';
 
 @Module({
   imports: [TypeOrmModule.forFeature([MetricRecord, UnitDto]), UnitModule],
   controllers: [MetricRecordController],
-  providers: [MetricRecordService, MetricRecordRepository, MetricTypeUnitRuleConstraint, RecordValueUnitRuleConstraint, IsSupportedUnitConstraint]
+  providers: [MetricRecordService, MetricRecordRepository, MetricTypeUnitRuleConstraint, RecordValueUnitRuleConstraint, IsSupportedUnitConstraint, ValidationAddRecordService]
 })
 export class MetricRecordModule {}

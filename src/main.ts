@@ -8,12 +8,13 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { useContainer } from 'class-validator';
-import { json } from 'body-parser';
+import bodyParser, { json, urlencoded } from 'body-parser';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { RequestLoggingInterceptor } from './interceptors/request-logging.interceptor';
 import { AllExceptionsFilter } from './filters/http-exception.filter';
 import { METRICAL_API_VERSION_1 } from './common/constant';
 import { METRICAL_QUEUE } from './rabbitmq/message.constant';
+import * as compression from 'compression';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -45,6 +46,8 @@ async function bootstrap() {
   app.use(cookieParser());
   app.use(helmet());
   app.use(json({ limit: '50mb' }));
+  app.use(urlencoded({ limit: '50mb', extended: true }));
+  app.use(compression());
   app.enableVersioning({
     type: VersioningType.URI,
     defaultVersion: METRICAL_API_VERSION_1,

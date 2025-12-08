@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Logger, Post, Query, UseGuards, Version } from '@nestjs/common';
-import { CreateMetricRecordDto } from './dtos/add-metric-record.dto';
+import { BadRequestException, Body, Controller, Get, Logger, Post, Query, UseGuards, Version } from '@nestjs/common';
+import { CreateMetricRecordDto, RecordValueDto } from './dtos/add-metric-record.dto';
 import { MetricRecordService } from './metric-record.service';
 import { SingleDataResponseDto } from '../../common/dtos/single-data-response.dto';
 import { Ctx, EventPattern, Payload, RmqContext } from '@nestjs/microservices';
@@ -12,17 +12,28 @@ import { GetMetricRecordsChartDto } from './dtos/metric-record-chart.dto';
 import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
 import { CheckMessageRetryGuard } from '../../guards/check-message-retry/check-message-retry.guard';
 import { METRICAL_API_VERSION_1 } from '../../common/constant';
+import { ValidationAddRecordService } from './validation/validation-add-record';
 
 @Controller('metric-records')
 export class MetricRecordController {
   private readonly logger = new Logger(MetricRecordController.name);
-
-  constructor(private readonly metricRecordService: MetricRecordService) {}
+  
+  constructor(private readonly metricRecordService: MetricRecordService, 
+    private readonly validationAddRecordService: ValidationAddRecordService) {
+  }
 
   @Version(METRICAL_API_VERSION_1)
   @ApiCreatedResponse({ description: 'Metric records created successfully', type: SingleDataResponseDto<boolean> })
   @Post()
   async createMetricRecord(@Body() createMetricRecordDto: CreateMetricRecordDto): Promise<SingleDataResponseDto<boolean>> {
+    const errors = this.validationAddRecordService.validateRecords(createMetricRecordDto.data);
+    if (errors.length > 0) {
+      throw new BadRequestException({
+        message: 'Validation failed',
+        errors: errors,
+        totalErrors: errors.length,
+      });
+    }
     return new SingleDataResponseDto<boolean>(await this.metricRecordService.createMetricRecord(createMetricRecordDto));
   }
 
