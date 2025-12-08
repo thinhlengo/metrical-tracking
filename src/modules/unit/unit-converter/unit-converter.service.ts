@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { DistanceUnit, TemperatureUnit } from '../dtos/unit.dto';
+import { CONVERT_UNIT_ERROR_MESSAGES } from '../../../common/message.constant';
 
 @Injectable()
 export class UnitConverterService {
@@ -17,7 +18,7 @@ export class UnitConverterService {
       const meters = value * this.distanceFactors[from];
       return meters / this.distanceFactors[to];
     } catch (error) {
-      this.logger.error(`Error converting distance: ${error} ${value} ${from} ${to}`);
+      this.logger.error(CONVERT_UNIT_ERROR_MESSAGES.ERROR_CONVERTING_DISTANCE(error, value, from, to));
       throw error;
     }
   }
@@ -35,8 +36,8 @@ export class UnitConverterService {
         celsius = value - 273.15;
         break;
       default:
-        this.logger.error(`Unknown temperature unit: ${from}`);
-        throw new Error(`Unknown temperature unit: ${from}`);
+        this.logger.error(CONVERT_UNIT_ERROR_MESSAGES.UNKNOWN_TEMPERATURE_UNIT(from));
+        throw new Error(CONVERT_UNIT_ERROR_MESSAGES.UNKNOWN_TEMPERATURE_UNIT(from));
     }
 
     switch (to) {
@@ -47,8 +48,8 @@ export class UnitConverterService {
       case TemperatureUnit.KELVIN:
         return celsius + 273.15;
       default:
-        this.logger.error(`Unknown temperature unit: ${to}`);
-        throw new Error(`Unknown temperature unit: ${to}`);
+        this.logger.error(CONVERT_UNIT_ERROR_MESSAGES.UNKNOWN_TEMPERATURE_UNIT(to));
+        throw new Error(CONVERT_UNIT_ERROR_MESSAGES.UNKNOWN_TEMPERATURE_UNIT(to));
     }
   }
 }

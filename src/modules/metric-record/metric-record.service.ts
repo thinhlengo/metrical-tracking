@@ -13,6 +13,7 @@ import { PaginationResponseDtoWithCursorDto } from '../../common/dtos/pagination
 import { RecordChartDto, RecordDto } from './dtos/record.dto';
 import { GetMetricRecordsChartDto } from './dtos/metric-record-chart.dto';
 import { sleep } from '../../utilities/sleep';
+import { CONVERT_UNIT_ERROR_MESSAGES, METRIC_SERVICE_LOG_MESSAGES } from '../../common/message.constant';
 
 @Injectable()
 export class MetricRecordService {
@@ -31,7 +32,7 @@ export class MetricRecordService {
     while (index < payload.data.length) {
       const batch = payload.data.slice(index, index + batchSize);
 
-      this.logger.log(`Creating metric records ${index} of ${payload.data.length}`);
+      this.logger.log(METRIC_SERVICE_LOG_MESSAGES.CREATING_METRIC_RECORDS(index, payload.data.length));
 
       this.clientRMQ
         .emit(METRICAL_RECORD_CREATE_MESSAGE, {
@@ -39,13 +40,13 @@ export class MetricRecordService {
         })
         .subscribe({
           next: (value) => {
-            this.logger.log(`Metric records created ${index} of ${payload.data.length} successfully ${JSON.stringify(value)}`);
+            this.logger.log(METRIC_SERVICE_LOG_MESSAGES.METRIC_RECORDS_CREATED_SUCCESSFULLY(index, payload.data.length, JSON.stringify(value)));
           },
           error: (error) => {
-            this.logger.error(`Error creating metric records ${index} of ${payload.data.length}`, error);
+            this.logger.error(METRIC_SERVICE_LOG_MESSAGES.ERROR_CREATING_METRIC_RECORDS_BATCH(index, payload.data.length), error);
           },
           complete: () => {
-            this.logger.log(`Metric records created ${index} of ${payload.data.length}`);
+            this.logger.log(METRIC_SERVICE_LOG_MESSAGES.METRIC_RECORDS_CREATED(index, payload.data.length));
           },
         });
 
@@ -91,9 +92,9 @@ export class MetricRecordService {
 
     const createdRecords = await this.metricRecordRepository.createMetricRecord(records);
     if (createdRecords.length > 0) {
-      this.logger.log(`Metric records created ${createdRecords.length} successfully`);
+      this.logger.log(METRIC_SERVICE_LOG_MESSAGES.METRIC_RECORDS_CREATED_COUNT(createdRecords.length));
     } else {
-      this.logger.error(`Error creating metric records`);
+      this.logger.error(CONVERT_UNIT_ERROR_MESSAGES.ERROR_CREATING_METRIC_RECORDS);
     }
 
     return true;

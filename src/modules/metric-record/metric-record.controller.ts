@@ -1,5 +1,5 @@
 import { BadRequestException, Body, Controller, Get, Logger, Post, Query, UseGuards, Version } from '@nestjs/common';
-import { CreateMetricRecordDto, RecordValueDto } from './dtos/add-metric-record.dto';
+import { CreateMetricRecordDto } from './dtos/add-metric-record.dto';
 import { MetricRecordService } from './metric-record.service';
 import { SingleDataResponseDto } from '../../common/dtos/single-data-response.dto';
 import { Ctx, EventPattern, Payload, RmqContext } from '@nestjs/microservices';
@@ -51,7 +51,6 @@ export class MetricRecordController {
     return new SingleDataResponseDto<RecordChartDto[]>(await this.metricRecordService.getMetricRecordsChart(params));
   }
 
-  @Version(METRICAL_API_VERSION_1)
   @UseGuards(CheckMessageRetryGuard)
   @EventPattern(METRICAL_RECORD_CREATE_MESSAGE)
   async createMetricRecordM(@Payload() payload: CreateMetricRecordDto, @Ctx() context: RmqContext) {

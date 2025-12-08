@@ -9,16 +9,24 @@ import { SingleDataResponseDto } from '../../common/dtos/single-data-response.dt
 import { PaginationResponseDtoWithCursorDto } from '../../common/dtos/pagination-response.dto';
 import { RecordChartDto, RecordDto } from './dtos/record.dto';
 import { RmqContext } from '@nestjs/microservices';
+import { ValidationAddRecordService } from './validation/validation-add-record';
+import { BadRequestException } from '@nestjs/common';
+import { VALIDATION_MESSAGES } from '../../common/message.constant';
 
 describe('MetricRecordController', () => {
   let controller: MetricRecordController;
   let metricRecordService: jest.Mocked<MetricRecordService>;
+  let validationAddRecordService: jest.Mocked<ValidationAddRecordService>;
 
   const mockMetricRecordService = {
     createMetricRecord: jest.fn(),
     getMetricRecords: jest.fn(),
     getMetricRecordsChart: jest.fn(),
     createMetricRecordMQ: jest.fn(),
+  };
+
+  const mockValidationAddRecordService = {
+    validateRecords: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -31,11 +39,16 @@ describe('MetricRecordController', () => {
           provide: MetricRecordService,
           useValue: mockMetricRecordService,
         },
+        {
+          provide: ValidationAddRecordService,
+          useValue: mockValidationAddRecordService,
+        },
       ],
     }).compile();
 
     controller = module.get<MetricRecordController>(MetricRecordController);
     metricRecordService = module.get(MetricRecordService);
+    validationAddRecordService = module.get(ValidationAddRecordService);
   });
 
   it('should be defined', () => {
@@ -47,25 +60,108 @@ describe('MetricRecordController', () => {
       data: [{ value: 100, unit: 'm', date: '2024-01-01T00:00:00Z' }],
     };
 
-    it('should return SingleDataResponseDto<true> when service succeeds', async () => {
+    it('should return SingleDataResponseDto<true> when validation passes and service succeeds', async () => {
+      mockValidationAddRecordService.validateRecords.mockReturnValue([]);
       mockMetricRecordService.createMetricRecord.mockResolvedValue(true);
+
       const result = await controller.createMetricRecord(validDto);
+
+      expect(mockValidationAddRecordService.validateRecords).toHaveBeenCalledWith(validDto.data);
       expect(result).toBeInstanceOf(SingleDataResponseDto);
       expect(result.data).toBe(true);
       expect(mockMetricRecordService.createMetricRecord).toHaveBeenCalledWith(validDto);
     });
 
-    it('should return SingleDataResponseDto<false> when service returns false', async () => {
+    it('should return SingleDataResponseDto<false> when validation passes and service returns false', async () => {
+      mockValidationAddRecordService.validateRecords.mockReturnValue([]);
       mockMetricRecordService.createMetricRecord.mockResolvedValue(false);
+
       const result = await controller.createMetricRecord(validDto);
+
       expect(result).toBeInstanceOf(SingleDataResponseDto);
       expect(result.data).toBe(false);
     });
 
     it('should throw error when service throws exception', async () => {
+      mockValidationAddRecordService.validateRecords.mockReturnValue([]);
       const error = new Error('Database connection failed');
       mockMetricRecordService.createMetricRecord.mockRejectedValue(error);
+
       await expect(controller.createMetricRecord(validDto)).rejects.toThrow('Database connection failed');
+    });
+
+    it('should throw BadRequestException when validation fails with single error', async () => {
+      const validationErrors = [{ index: 0, field: 'value' as const, message: VALIDATION_MESSAGES.VALUE_REQUIRED }];
+      mockValidationAddRecordService.validateRecords.mockReturnValue(validationErrors);
+
+      await expect(controller.createMetricRecord(validDto)).rejects.toThrow(BadRequestException);
+      expect(mockMetricRecordService.createMetricRecord).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException with all errors when validation fails with multiple errors', async () => {
+      const validationErrors = [
+        { index: 0, field: 'value' as const, message: VALIDATION_MESSAGES.VALUE_REQUIRED },
+        { index: 0, field: 'unit' as const, message: VALIDATION_MESSAGES.UNIT_REQUIRED },
+        { index: 1, field: 'date' as const, message: VALIDATION_MESSAGES.DATE_REQUIRED },
+      ];
+      mockValidationAddRecordService.validateRecords.mockReturnValue(validationErrors);
+
+      try {
+        await controller.createMetricRecord(validDto);
+        fail('Expected BadRequestException to be thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(BadRequestException);
+        const response = (error as BadRequestException).getResponse() as {
+          message: string;
+          errors: typeof validationErrors;
+          totalErrors: number;
+        };
+        expect(response.message).toBe('Validation failed');
+        expect(response.errors).toEqual(validationErrors);
+        expect(response.totalErrors).toBe(3);
+      }
+      expect(mockMetricRecordService.createMetricRecord).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException with invalid unit error', async () => {
+      const invalidDto: CreateMetricRecordDto = {
+        data: [{ value: 100, unit: 'invalid_unit', date: '2024-01-01T00:00:00Z' }],
+      };
+      const validationErrors = [{ index: 0, field: 'unit' as const, message: VALIDATION_MESSAGES.INVALID_UNIT('invalid_unit') }];
+      mockValidationAddRecordService.validateRecords.mockReturnValue(validationErrors);
+
+      try {
+        await controller.createMetricRecord(invalidDto);
+        fail('Expected BadRequestException to be thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(BadRequestException);
+        const response = (error as BadRequestException).getResponse() as {
+          message: string;
+          errors: typeof validationErrors;
+          totalErrors: number;
+        };
+        expect(response.errors[0].message).toBe('Invalid unit: invalid_unit');
+      }
+    });
+
+    it('should throw BadRequestException when distance value is negative', async () => {
+      const negativeDistanceDto: CreateMetricRecordDto = {
+        data: [{ value: -100, unit: 'm', date: '2024-01-01T00:00:00Z' }],
+      };
+      const validationErrors = [{ index: 0, field: 'value' as const, message: VALIDATION_MESSAGES.DISTANCE_CANNOT_BE_NEGATIVE }];
+      mockValidationAddRecordService.validateRecords.mockReturnValue(validationErrors);
+      await expect(controller.createMetricRecord(negativeDistanceDto)).rejects.toThrow(BadRequestException);
+      expect(mockMetricRecordService.createMetricRecord).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException when date format is invalid', async () => {
+      const invalidDateDto: CreateMetricRecordDto = {
+        data: [{ value: 100, unit: 'm', date: 'not-a-date' }],
+      };
+      const validationErrors = [{ index: 0, field: 'date' as const, message: VALIDATION_MESSAGES.INVALID_DATE_FORMAT }];
+      mockValidationAddRecordService.validateRecords.mockReturnValue(validationErrors);
+      await expect(controller.createMetricRecord(invalidDateDto)).rejects.toThrow(BadRequestException);
+      expect(mockMetricRecordService.createMetricRecord).not.toHaveBeenCalled();
     });
   });
 
