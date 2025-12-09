@@ -43,7 +43,7 @@ export class MetricRecordRepository {
   async getMetricRecordsChart(params: GetMetricRecordsChartDto): Promise<MetricRecord[]> {
     const sql = `
       WITH teompp AS (
-        SELECT row_number() OVER (PARTITION BY DATE(mr."recordedAt") ORDER BY  mr."recordedAt" DESC), mr."id" 
+        SELECT row_number() OVER (PARTITION BY DATE(mr."recordedAt") ORDER BY  mr."createdAt" DESC), mr."id" 
         FROM metric_records mr
         WHERE mr."metricType" = $1
         AND mr."recordedAt" <= $3 AND mr."recordedAt" >= $2
