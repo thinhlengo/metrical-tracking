@@ -42,18 +42,35 @@ export class MetricRecordRepository {
 
   async getMetricRecordsChart(params: GetMetricRecordsChartDto): Promise<MetricRecord[]> {
     const sql = `
-      WITH teompp AS (
-        SELECT row_number() OVER (PARTITION BY DATE(mr."recordedAt") ORDER BY  mr."createdAt" DESC), mr."id" 
+      WITH RECURSIVE dates AS (
+        (SELECT DATE(mr."recordedAt") as d
         FROM metric_records mr
-        WHERE mr."metricType" = $1
-        AND mr."recordedAt" <= $3 AND mr."recordedAt" >= $2
-        ORDER BY mr."recordedAt" DESC	
+        WHERE mr."metricType" = $1 AND mr."recordedAt" >= $2 AND mr."recordedAt" <= $3
+        ORDER BY mr."recordedAt" DESC
+        LIMIT 1)
+        UNION ALL
+        SELECT (
+          SELECT DATE(mr."recordedAt")
+          FROM metric_records mr
+          WHERE mr."metricType" = $1
+            AND DATE(mr."recordedAt") < dates.d AND mr."recordedAt" >= $2
+          ORDER BY mr."recordedAt" DESC
+          LIMIT 1
+        )
+        FROM dates
+        WHERE dates.d IS NOT NULL
       )
-      SELECT mr."recordedAt", mr."id", mr."value", mr."metricType", mr."source"
-      FROM metric_records mr
-      WHERE mr."id" IN (SELECT "id" FROM teompp WHERE "row_number" = 1)
-      ORDER BY mr."recordedAt" DESC`;
-
-    return this.repository.query(sql, [params.metricType, params.dates[0], params.dates[1]]);
+      SELECT mt.*
+      FROM dates d
+      JOIN LATERAL (
+        SELECT mr."recordedAt", mr."id", mr."value", mr."metricType", mr."source"
+        FROM metric_records mr
+        WHERE mr."metricType" = $1  AND DATE(mr."recordedAt") = d.d
+        ORDER BY mr."createdAt" DESC
+        LIMIT 1
+      ) mt ON true
+      WHERE d.d IS NOT NULL`
+    const result = await this.repository.query(sql, [params.metricType, params.dates[0], params.dates[1]]);
+    return result;
   }
 }

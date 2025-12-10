@@ -7,6 +7,7 @@ export enum MetricType {
 }
 
 @Index(['metricType'])
+@Index(['metricType', 'recordedAt', 'createdAt'])
 @Index(['metricType', 'recordedAt'])
 @Index(['id', 'recordedAt'])
 @Entity('metric_records')
