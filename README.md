@@ -53,7 +53,7 @@ A metric tracking system for recording and visualizing **Distance** and **Temper
 
 **Solution**:
 
-- **Window Function for Daily Aggregation**: SQL uses `ROW_NUMBER() OVER (PARTITION BY DATE)` to get one record per day
+- **Recursive CTE + LATERAL JOIN**: SQL uses recursive CTE to iterate through dates with records, then LATERAL JOIN to fetch the latest record per day (by `createdAt DESC`)
 - **On-the-fly Unit Conversion**: Converts from base unit to requested unit at read time using `UnitConverterService`
 - **Time Interval Filtering**: Computes date range from `TimeInterval` enum (1 month / 2 months)
 
