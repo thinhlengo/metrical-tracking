@@ -154,6 +154,34 @@ npm run start:debug
 
 The application will be available at `http://localhost:3005` (or the port specified in `APP_PORT`).
 
+## Docker Container
+
+You can also run the application as a standalone Docker container using the provided helper script. This is useful for testing the production build in a containerized environment.
+
+```bash
+# Build and run the container
+./build-and-run-container.sh
+```
+
+This script will:
+1. proper `.env.docker` file from `.env.example` if it doesn't exist
+2. Build the Docker image
+3. Stop and remove any existing container named `metrical-tracking-container`
+4. Run the new container on port 3005
+
+**Useful Docker Commands:**
+
+```bash
+# View container logs
+docker logs -f metrical-tracking-container
+
+# Stop the container
+docker stop metrical-tracking-container
+
+# Remove the container
+docker rm metrical-tracking-container
+```
+
 ## API Documentation
 
 Swagger UI is available at `/docs` when the application is running.
