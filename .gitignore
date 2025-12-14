@@ -63,3 +63,6 @@ store-services
 # Test payload
 gen_payload.js
 payload_test.json
+
+# Uploads
+uploads

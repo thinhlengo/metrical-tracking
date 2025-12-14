@@ -1,11 +1,11 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { CreateMetricRecordDto } from './dtos/add-metric-record.dto';
+import { CreateMetricRecordDto, RecordValueDto } from './dtos/add-metric-record.dto';
 import { MetricRecordRepository } from './metric-record.repository';
 import { ClientRMQ } from '@nestjs/microservices';
 import { UnitService } from '../unit/unit.service';
 import { DistanceUnit, TemperatureUnit, UnitDto } from '../unit/dtos/unit.dto';
 import { MetricRecord, MetricType } from './metric-record.entity';
-import { METRICAL_RECORD_CREATE_MESSAGE } from '../../rabbitmq/message.constant';
+import { METRICAL_RECORD_CREATE_MESSAGE, METRICAL_RECORD_IMPORT_FILE_MESSAGE } from '../../rabbitmq/message.constant';
 import { METRICAL_SERVICE } from '../../rabbitmq/rabbitmq.module';
 import { UnitConverterService } from '../unit/unit-converter/unit-converter.service';
 import { GetMetricRecordsDto } from './dtos/get-metric-record.dto';
@@ -14,6 +14,10 @@ import { RecordChartDto, RecordDto } from './dtos/record.dto';
 import { GetMetricRecordsChartDto } from './dtos/metric-record-chart.dto';
 import { sleep } from '../../utilities/sleep';
 import { CONVERT_UNIT_ERROR_MESSAGES, METRIC_SERVICE_LOG_MESSAGES } from '../../common/message.constant';
+import { parser } from 'stream-json';
+import { streamArray } from 'stream-json/streamers/StreamArray';
+import { chain } from 'stream-chain';
+import { createReadStream } from 'fs';
 
 @Injectable()
 export class MetricRecordService {
@@ -24,7 +28,7 @@ export class MetricRecordService {
     private readonly unitService: UnitService,
     private readonly unitConverterService: UnitConverterService,
     @Inject(METRICAL_SERVICE) private readonly clientRMQ: ClientRMQ,
-  ) {}
+  ) { }
 
   async createMetricRecord(payload: CreateMetricRecordDto): Promise<boolean> {
     const batchSize = 3000;
@@ -57,7 +61,7 @@ export class MetricRecordService {
     return true;
   }
 
-  async createMetricRecordMQ(payload: CreateMetricRecordDto) :Promise<boolean> {
+  async createMetricRecordMQ(payload: CreateMetricRecordDto): Promise<boolean> {
     const units = this.unitService.list();
     const unitMap = new Map<string, UnitDto>(
       units.map((unit) => [unit.symbol, unit]),
@@ -139,7 +143,7 @@ export class MetricRecordService {
     return records.map((record) => {
       let value: number = record.source.value;
       let unit: string = params.unit || record.source.unit;
-      
+
       if (params.unit) {
         if (record.metricType === MetricType.DISTANCE) {
           value = this.unitConverterService.convertDistance(
@@ -162,5 +166,86 @@ export class MetricRecordService {
         unit: unit,
       };
     });
+  }
+
+  async handleImportFile(filePath: string) {
+    this.clientRMQ
+      .emit(METRICAL_RECORD_IMPORT_FILE_MESSAGE, {
+        data: filePath,
+      })
+      .subscribe({
+        next: (value) => {
+          this.logger.log('File imported successfully:', value);
+        },
+        error: (error) => {
+          this.logger.error('Error importing file', error);
+        },
+        complete: () => {
+          this.logger.log('File imported successfully');
+        },
+      });
+    return;
+  }
+
+  async importLargeFile(filePath: string) {
+    const pipeline = chain([
+      createReadStream(filePath),
+      parser(),
+      streamArray()
+    ]);
+    const batchSize = 2000;
+
+    let batch: RecordValueDto[] = [];
+
+    let index = 0;
+    for await (const { value } of pipeline) {
+      batch.push(value);
+
+      if (batch.length === batchSize) {
+        index += batchSize;
+        this.clientRMQ
+          .emit(METRICAL_RECORD_CREATE_MESSAGE, {
+            data: batch,
+          })
+          .subscribe({
+            next: (value) => {
+              this.logger.log(METRIC_SERVICE_LOG_MESSAGES.METRIC_RECORDS_CREATED_SUCCESSFULLY(index, batchSize, JSON.stringify(value)));
+            },
+            error: (error) => {
+              this.logger.error(METRIC_SERVICE_LOG_MESSAGES.ERROR_CREATING_METRIC_RECORDS_BATCH(index, batchSize), error);
+            },
+            complete: () => {
+              this.logger.log(METRIC_SERVICE_LOG_MESSAGES.METRIC_RECORDS_CREATED(index, batchSize));
+            },
+          });
+        batch = [];
+
+        await sleep(1000);
+      }
+    }
+
+    if (batch.length > 0) {
+      index += batchSize;
+      this.clientRMQ
+        .emit(METRICAL_RECORD_CREATE_MESSAGE, {
+          data: batch,
+        })
+        .subscribe({
+          next: (value) => {
+            this.logger.log(METRIC_SERVICE_LOG_MESSAGES.METRIC_RECORDS_CREATED_SUCCESSFULLY(index, batchSize, JSON.stringify(value)));
+          },
+          error: (error) => {
+            this.logger.error(METRIC_SERVICE_LOG_MESSAGES.ERROR_CREATING_METRIC_RECORDS_BATCH(index, batchSize), error);
+          },
+          complete: () => {
+            this.logger.log(METRIC_SERVICE_LOG_MESSAGES.METRIC_RECORDS_CREATED(index, batchSize));
+          },
+        });
+      batch = [];
+
+      await sleep(1000);
+    }
+
+    return { status: 'DONE' };
   }
 }
