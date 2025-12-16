@@ -10,6 +10,8 @@ import { MetricRecordModule } from './modules/metric-record/metric-record.module
 import { UnitModule } from './modules/unit/unit.module';
 import redisConfig from './configurate/redis.config';
 import { RateLimitMiddleware } from './middlewares/rate-limit/rate-limit.middleware';
+import { ContextMiddleware } from './middlewares/context/context.middleware';
+import { ContextService } from './middlewares/context/context.service';
 
 @Module({
   imports: [
@@ -24,6 +26,7 @@ import { RateLimitMiddleware } from './middlewares/rate-limit/rate-limit.middlew
     MetricRecordModule,
     UnitModule
   ],
+  providers: [ContextService],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {

@@ -17,12 +17,11 @@ import { METRICAL_QUEUE } from './rabbitmq/message.constant';
 import * as compression from 'compression';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    logger: new LoggerService(),
-  });
-  
+  const app = await NestFactory.create(AppModule);
   const logger = app.get(LoggerService);
   const configService = app.get(ConfigService<AllConfigType>);
+  
+  app.useLogger(logger);
 
   const metricalService = app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.RMQ,
