@@ -1,8 +1,8 @@
-import { BadRequestException, Body, Controller, Get, Logger, Post, Query, UploadedFile, UseGuards, UseInterceptors, Version } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Inject, Logger, Post, Query, UploadedFile, UseGuards, UseInterceptors, Version } from '@nestjs/common';
 import { CreateMetricRecordDto } from './dtos/add-metric-record.dto';
 import { MetricRecordService } from './metric-record.service';
 import { SingleDataResponseDto } from '../../common/dtos/single-data-response.dto';
-import { Ctx, EventPattern, Payload, RmqContext } from '@nestjs/microservices';
+import { ClientRMQ, Ctx, EventPattern, Payload, RmqContext } from '@nestjs/microservices';
 import { METRICAL_RECORD_CREATE_MESSAGE, METRICAL_RECORD_IMPORT_FILE_MESSAGE } from '../../rabbitmq/message.constant';
 import { Channel, Message } from 'amqplib';
 import { GetMetricRecordsDto } from './dtos/get-metric-record.dto';
@@ -16,6 +16,7 @@ import { ValidationAddRecordService } from './validation/validation-add-record';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import { METRICAL_SERVICE } from 'src/rabbitmq/rabbitmq.module';
 
 export const multerConfig = {
   storage: diskStorage({
@@ -99,7 +100,7 @@ export class MetricRecordController {
     const channel = context.getChannelRef() as Channel;
     const originalMsg = context.getMessage() as Message;
     try {
-      await this.metricRecordService.importLargeFile(payload.data);
+      await this.metricRecordService.importFromFile(payload.data);
       this.logger.log(`Metric records imported`);
       channel.ack(originalMsg);
     } catch (error) {

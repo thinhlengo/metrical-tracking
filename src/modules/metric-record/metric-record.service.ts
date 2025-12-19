@@ -22,7 +22,8 @@ import { createReadStream } from 'fs';
 @Injectable()
 export class MetricRecordService {
   private readonly logger = new Logger(MetricRecordService.name);
-
+  private readonly batchSize = 3000;
+  private readonly sleepTimeNewRecord = 500;
   constructor(
     private readonly metricRecordRepository: MetricRecordRepository,
     private readonly unitService: UnitService,
@@ -31,10 +32,9 @@ export class MetricRecordService {
   ) { }
 
   async createMetricRecord(payload: CreateMetricRecordDto): Promise<boolean> {
-    const batchSize = 3000;
     let index = 0;
     while (index < payload.data.length) {
-      const batch = payload.data.slice(index, index + batchSize);
+      const batch = payload.data.slice(index, index + this.batchSize);
 
       this.logger.log(METRIC_SERVICE_LOG_MESSAGES.CREATING_METRIC_RECORDS(index, payload.data.length));
 
@@ -54,9 +54,9 @@ export class MetricRecordService {
           },
         });
 
-      index += batchSize;
+      index += this.batchSize;
 
-      await sleep(200);
+      await sleep(this.sleepTimeNewRecord);
     }
     return true;
   }
@@ -187,13 +187,12 @@ export class MetricRecordService {
     return;
   }
 
-  async importLargeFile(filePath: string) {
+  async importFromFile(filePath: string) {
     const pipeline = chain([
       createReadStream(filePath),
       parser(),
       streamArray()
     ]);
-    const batchSize = 2000;
 
     let batch: RecordValueDto[] = [];
 
@@ -201,51 +200,40 @@ export class MetricRecordService {
     for await (const { value } of pipeline) {
       batch.push(value);
 
-      if (batch.length === batchSize) {
-        index += batchSize;
-        this.clientRMQ
-          .emit(METRICAL_RECORD_CREATE_MESSAGE, {
-            data: batch,
-          })
-          .subscribe({
-            next: (value) => {
-              this.logger.log(METRIC_SERVICE_LOG_MESSAGES.METRIC_RECORDS_CREATED_SUCCESSFULLY(index, batchSize, JSON.stringify(value)));
-            },
-            error: (error) => {
-              this.logger.error(METRIC_SERVICE_LOG_MESSAGES.ERROR_CREATING_METRIC_RECORDS_BATCH(index, batchSize), error);
-            },
-            complete: () => {
-              this.logger.log(METRIC_SERVICE_LOG_MESSAGES.METRIC_RECORDS_CREATED(index, batchSize));
-            },
-          });
+      if (batch.length === this.batchSize) {
+        index += this.batchSize;
+        this.publishToRabbitMQ(batch, index);
         batch = [];
-
-        await sleep(1000);
+        await sleep(this.sleepTimeNewRecord);
       }
     }
 
     if (batch.length > 0) {
-      index += batchSize;
-      this.clientRMQ
-        .emit(METRICAL_RECORD_CREATE_MESSAGE, {
-          data: batch,
-        })
-        .subscribe({
-          next: (value) => {
-            this.logger.log(METRIC_SERVICE_LOG_MESSAGES.METRIC_RECORDS_CREATED_SUCCESSFULLY(index, batchSize, JSON.stringify(value)));
-          },
-          error: (error) => {
-            this.logger.error(METRIC_SERVICE_LOG_MESSAGES.ERROR_CREATING_METRIC_RECORDS_BATCH(index, batchSize), error);
-          },
-          complete: () => {
-            this.logger.log(METRIC_SERVICE_LOG_MESSAGES.METRIC_RECORDS_CREATED(index, batchSize));
-          },
-        });
+      index += this.batchSize;
+      this.publishToRabbitMQ(batch, index);
       batch = [];
 
-      await sleep(1000);
+      await sleep(this.sleepTimeNewRecord);
     }
 
     return { status: 'DONE' };
+  }
+
+  async publishToRabbitMQ(batch: RecordValueDto[], index: number) {
+    this.clientRMQ
+    .emit(METRICAL_RECORD_CREATE_MESSAGE, {
+      data: batch,
+    })
+    .subscribe({
+      next: (value) => {
+        this.logger.log(METRIC_SERVICE_LOG_MESSAGES.METRIC_RECORDS_CREATED_SUCCESSFULLY(index, this.batchSize, JSON.stringify(value)));
+      },
+      error: (error) => {
+        this.logger.error(METRIC_SERVICE_LOG_MESSAGES.ERROR_CREATING_METRIC_RECORDS_BATCH(index, this.batchSize), error);
+      },
+      complete: () => {
+        this.logger.log(METRIC_SERVICE_LOG_MESSAGES.METRIC_RECORDS_CREATED(index, this.batchSize));
+      },
+    });
   }
 }
