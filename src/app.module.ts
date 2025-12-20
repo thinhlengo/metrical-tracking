@@ -12,6 +12,7 @@ import redisConfig from './configurate/redis.config';
 import { RateLimitMiddleware } from './middlewares/rate-limit/rate-limit.middleware';
 import { ContextMiddleware } from './middlewares/context/context.middleware';
 import { ContextService } from './middlewares/context/context.service';
+import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 
 @Module({
   imports: [
@@ -19,6 +20,9 @@ import { ContextService } from './middlewares/context/context.service';
       isGlobal: true,
       load: [appConfig, rabbitmqConfig, databaseConfig, redisConfig],
       envFilePath: ['.env']
+    }),
+    PrometheusModule.register({
+      path: '/p-metrics',
     }),
     LoggerModule,
     RabbitMQModule,
